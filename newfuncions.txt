@@ -1,0 +1,43 @@
+int tokensDisponiveis(Player p, int dado, int _pos_x, int __pos_y, char vetor[])
+{
+    int r = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        if (p.piece[i].estaEmJogo)
+        {
+            if ((p.piece[i].estaNaPosicaoInicial && dado == 6) || !p.piece[i].estaNaPosicaoInicial)
+            {
+                gotoxy(_pos_x, __pos_y++);
+                cout << "[" << p.piece[i].letra << "]";
+                vetor[r] = p.piece[i].letra;
+                r++;
+            }
+        }
+    }
+
+    return r;
+}
+
+char getLetraInPercurso(Player p)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        if (p.piece[i].estaEmJogo && !p.piece[i].estaNaPosicaoInicial)
+        {
+            return p.piece[i].letra;
+        }
+    }
+    return ' ';
+}
+
+char getLetraStopped(Player p)
+{
+    for (int i = 0; i < 4; i++)
+    {
+        if (p.piece[i].estaNaPosicaoInicial)
+        {
+            return p.piece[i].letra;
+        }
+    }
+    return ' ';
+}
