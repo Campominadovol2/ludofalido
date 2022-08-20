@@ -5,9 +5,7 @@
 #include <cstdlib>
 #include <cctype>
 #include <time.h>
-#ifdef __WIN32
-#include <windows.h>
-#endif
+
 #define DELAY 0
 
 using namespace std;
@@ -21,6 +19,7 @@ using namespace std;
 #include "./Bibliotecas/desenhos.h"
 
 int pecasNoInicio(Player p);
+
 void posicionarCursorNoMeio();
 void darZoom(int a);
 int vezDoProximo(int vezAtual, Player p[]);
@@ -28,83 +27,133 @@ void sequencial(int num, int vetor[]);
 
 int main()
 {
-
+    //srand(time(NULL));
     darZoom(7);
 
+    #ifdef _WIN32
     system("chcp 65001");
     system("MODE con cols=80 lines=22");
+    #endif
     clrscr();
 
     char tabuleiro[LINHAS][COLUNAS];
     Player players[4];
     iniciarTabuleiro(tabuleiro);
 
-    //TELA DE SELECIONAR MODO DE JOGO
+    // TELA DE SELECIONAR MODO DE JOGO
     int mode = 0, numplayers;
     cout << "Digite o numero de players: ";
     cin >> mode;
-    system("cls");
+    clrscr();
 
-    if      (mode == 2)
+    int vezDe;
+
+    if (mode == 2)
     {
         /// Cria��o dos jogares. Isso n�o pode sair do programa
         /// Passa o jogador que vc quer criar, o nome dele, o tabuleiro e se ele vai ou n�o jogar;
         /// A� vc faz um jeito de perguntar quantos v�o jogar e atribui o ultimo elemento com true ou false
 
-        //DOIS PLAYERS
+        // DOIS PLAYERS
         criarJogador(players[VERDE], "VERDE", tabuleiro, VERDE, false);
         criarJogador(players[AZUL], "AZUL", tabuleiro, AZUL, false);
         criarJogador(players[AMARELO], "AMARELO", tabuleiro, AMARELO, true);
         criarJogador(players[VERMELHO], "VERMELHO", tabuleiro, VERMELHO, true);
         numplayers = 2;
+        vezDe = 1;
     }
     else if (mode == 3)
     {
-        //TRES PLAYERS
+        // TRES PLAYERS
         criarJogador(players[VERDE], "VERDE", tabuleiro, VERDE, true);
         criarJogador(players[AZUL], "AZUL", tabuleiro, AZUL, false);
         criarJogador(players[AMARELO], "AMARELO", tabuleiro, AMARELO, true);
         criarJogador(players[VERMELHO], "VERMELHO", tabuleiro, VERMELHO, true);
         numplayers = 3;
+        vezDe = 0;
     }
     else if (mode == 4)
     {
-        //QUATRO PLAYERS
+        // QUATRO PLAYERS
         criarJogador(players[VERDE], "VERDE", tabuleiro, VERDE, true);
         criarJogador(players[AZUL], "AZUL", tabuleiro, AZUL, true);
         criarJogador(players[AMARELO], "AMARELO", tabuleiro, AMARELO, true);
         criarJogador(players[VERMELHO], "VERMELHO", tabuleiro, VERMELHO, true);
         numplayers = 4;
+        vezDe = rand() % 4;
     }
-    else if (mode == 5)
-    {
-        //CINCO PLAYERS
-        criarJogador(players[VERDE], "VERDE", tabuleiro, VERDE, true);
-        criarJogador(players[AZUL], "AZUL", tabuleiro, AZUL, true);
-        criarJogador(players[AMARELO], "AMARELO", tabuleiro, AMARELO, true);
-        criarJogador(players[VERMELHO], "VERMELHO", tabuleiro, VERMELHO, true);
-        numplayers = 4;
-    }
-    
-    int vetorseq[4];
-    sequencial(numplayers, vetorseq);
+
+
     printTabuleiro(tabuleiro);
 
-    //LACOS DE PARTIDA
+    // LACOS DE PARTIDA
     desenhar_quadrado(40, 20, 35, 0);
     while (1)
-    {   
-        for (int ind = 0; ind < numplayers; ind++) //utilizar o indice desse vetor para direcionar jogador
+    {
+        size_t size;
+        int * vetor = sortearDados(size);
+
+        bubble_n_sort(vetor, size, 0);
+
+        if(contarNum6(vetor, size) == 3)
         {
-            // BLOCO DE JOGADA PARA CADA JOGADOR
-            preencher_com_espacos(38, 13, 36, 1);
-            gotoxy(40, 2);
-            printf("Vez do jogador: %s", players[vetorseq[ind]].nome);
-            desenhar_linha_horizontal(37, 3, 36);
-            jogamentos(players, vetorseq[ind], tabuleiro, pecasNoInicio(players[vetorseq[ind]]), 4 - players[vetorseq[ind]].pecasEmJogo, 36, 0);
-            //condição de vencedor para parar o jogo e printar o vencedor
-            getch();
+            continue;
         }
+
+        for(int i = 0; i < size; i++)
+        {
+            textcolor(15);
+            desenhar_quadrado(40, 20, 35, 0);
+
+            gotoxy(42, 2);
+            cout << "Vez de " << players[vezDe].nome;
+            viewvector(vetor, size, 40, 6);
+
+            char temp = selecionartoken(players[vezDe], containSix(vetor, size));
+            desenhar_quadrado(40, 20, 35, 0);
+            int dado = selecionarNumero(vetor, size, temp, players[vezDe]);
+
+            for(int i = 0; i < size; i++)
+            {
+                if(vetor[i] == dado)
+                {
+                    vetor[i] = 0;
+                    break;
+                }
+            }
+            
+            
+            int r = andarCasas(tabuleiro, vetor[i], temp, players);
+            vetor[i] = 0;
+
+            if(r == -2 || r == 1)
+            {
+                int aux = i + 1;
+                size++;
+                vetor = (int*) realloc(vetor, size);
+                vetor[aux] = rand() % 6 + 1; 
+
+                while(vetor[aux++] == 6)
+                {
+                    size++;
+                    vetor = (int*) realloc(vetor, size * sizeof(int));
+                    vetor[aux] = rand() % 6 + 1; 
+                }
+
+            }
+
+            if(players[vezDe].pecasEmJogo == 0)
+            {
+                cout << "VITORIA";
+                return 0;   
+            }
+
+            
+        }
+
+        vezDe = vezDoProximo(vezDe, players);
+
+        
     }
 
     printTabuleiro(tabuleiro);
@@ -112,6 +161,7 @@ int main()
     return 0;
 }
 
+#ifdef _WIN32
 void posicionarCursorNoMeio()
 {
     SetCursorPos(GetSystemMetrics(SM_CXSCREEN) / 2, GetSystemMetrics(SM_CYSCREEN) / 2);
@@ -124,25 +174,35 @@ void darZoom(int a)
     for (int i = 0; i < a; i++)
     {
         posicionarCursorNoMeio();
-        mouse_event(MOUSEEVENTF_WHEEL, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_ABSOLUTE, WHEEL_DELTA, NULL);
+        mouse_event(MOUSEEVENTF_WHEEL, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_ABSOLUTE, WHEEL_DELTA, 0);
     }
     keybd_event(VK_LCONTROL, 0x1C, KEYEVENTF_KEYUP, 0);
 }
 
+#else
+
+void posicionarCursorNoMeio()
+{
+
+}
+
+void darZoom(int a)
+{
+
+}
+
+#endif
 
 int pecasNoInicio(Player p)
 {
     int temp = 0;
-    for(int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
-        if(p.piece[i].estaNaPosicaoInicial)
+        if (p.piece[i].estaNaPosicaoInicial)
             temp++;
     }
     return temp;
 }
-
-
-
 
 int vezDoProximo(int vezAtual, Player p[])
 {
